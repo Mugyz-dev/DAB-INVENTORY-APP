@@ -11,16 +11,16 @@ export default function Layout() {
   return (
     <div className="d-flex flex-column min-vh-100">
       <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-3">
-        <Link className="navbar-brand fw-bold" to="/">DAB Enterprise</Link>
+        <Link className="navbar-brand fw-bold" to="/">Didier's Choice</Link>
         <div className="collapse navbar-collapse">
           <ul className="navbar-nav me-auto">
             <li className="nav-item"><NavLink to="/" end className={link}>Dashboard</NavLink></li>
-            <li className="nav-item"><NavLink to="/products" className={link}>Products</NavLink></li>
+            <li className="nav-item"><NavLink to="/products" className={link}>Meat Stock</NavLink></li>
             <li className="nav-item"><NavLink to="/sales" className={link}>Sales</NavLink></li>
             {isAdmin && <>
               <li className="nav-item"><NavLink to="/categories" className={link}>Categories</NavLink></li>
               <li className="nav-item"><NavLink to="/suppliers" className={link}>Suppliers</NavLink></li>
-              <li className="nav-item"><NavLink to="/inventory" className={link}>Inventory</NavLink></li>
+              <li className="nav-item"><NavLink to="/inventory" className={link}>Stock Movements</NavLink></li>
               <li className="nav-item"><NavLink to="/users" className={link}>Users</NavLink></li>
               <li className="nav-item"><NavLink to="/reports" className={link}>Reports</NavLink></li>
             </>}
@@ -32,7 +32,7 @@ export default function Layout() {
       </nav>
       <main className="container-fluid py-4 flex-grow-1"><Outlet /></main>
       <footer className="text-center text-muted py-3 small border-top">
-        © {new Date().getFullYear()} DAB Enterprise Ltd
+        (c) {new Date().getFullYear()} Didier's Choice
       </footer>
     </div>
   );

@@ -18,12 +18,12 @@ export default function Sales() {
   return (
     <div>
       <div className="d-flex justify-content-between mb-3">
-        <h4 className="mb-0">Sales</h4>
+        <h4 className="mb-0">Butcher Sales</h4>
         <Link to="/sales/new" className="btn btn-primary btn-sm">+ New Sale</Link>
       </div>
       <table className="table table-striped table-hover bg-white shadow-sm">
-        <thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th>Cashier</th><th>Pay</th>
-                   <th className="text-end">Total</th><th></th></tr></thead>
+        <thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th>Cashier</th><th>Pay</th><th>Status</th>
+                   <th className="text-end">Balance</th><th className="text-end">Total</th><th></th></tr></thead>
         <tbody>
           {list.map(s=>(
             <tr key={s.id}>
@@ -32,13 +32,15 @@ export default function Sales() {
               <td>{s.customer_name || '-'}</td>
               <td>{s.cashier}</td>
               <td>{s.payment_method}</td>
+              <td>{s.payment_status}</td>
+              <td className="text-end">{Number(s.balance_due || 0).toLocaleString()}</td>
               <td className="text-end">{Number(s.total).toLocaleString()}</td>
               <td className="text-end">
-                <button className="btn btn-sm btn-outline-primary" onClick={()=>openInvoice(s.id)}>Invoice PDF</button>
+                <button className="btn btn-sm btn-outline-primary" onClick={()=>openInvoice(s.id)}>Receipt PDF</button>
               </td>
             </tr>
           ))}
-          {!list.length && <tr><td colSpan="7" className="text-center text-muted">No sales yet</td></tr>}
+          {!list.length && <tr><td colSpan="9" className="text-center text-muted">No sales yet</td></tr>}
         </tbody>
       </table>
     </div>

@@ -47,7 +47,8 @@ exports.get = async (req, res, next) => {
 exports.create = async (req, res, next) => {
   const conn = await db.getConnection();
   try {
-    const { customer_name, customer_phone, payment_method, tax_rate, items } = req.body;
+    const { customer_name, customer_phone, payment_method, tax_rate,
+            discount, amount_paid, items } = req.body;
     if (!Array.isArray(items) || !items.length) {
       return res.status(400).json({ message: 'At least one item is required' });
     }
@@ -56,7 +57,7 @@ exports.create = async (req, res, next) => {
     const resolved = [];
     for (const it of items) {
       const qty = Number(it.quantity);
-      if (!Number.isInteger(qty) || qty <= 0) throw new Error('Invalid item quantity');
+      if (!Number.isFinite(qty) || qty <= 0) throw new Error('Invalid item quantity');
       const [pRows] = await conn.query(
         'SELECT id,name,selling_price,quantity FROM products WHERE id = ? FOR UPDATE', [it.product_id]
       );
@@ -74,14 +75,22 @@ exports.create = async (req, res, next) => {
       );
     }
     const taxRate = Number(tax_rate || 0);
-    const tax = +(subtotal * taxRate / 100).toFixed(2);
-    const total = +(subtotal + tax).toFixed(2);
+    const discountAmount = Math.min(Math.max(Number(discount || 0), 0), subtotal);
+    const taxable = subtotal - discountAmount;
+    const tax = +(taxable * taxRate / 100).toFixed(2);
+    const total = +(taxable + tax).toFixed(2);
+    const paid = payment_method === 'credit'
+      ? Math.min(Math.max(Number(amount_paid || 0), 0), total)
+      : Math.min(Math.max(Number(amount_paid || total), 0), total);
+    const balance = +(total - paid).toFixed(2);
+    const paymentStatus = balance <= 0 ? 'paid' : paid > 0 ? 'partial' : 'unpaid';
     const inv = invoiceNumber();
     const [r] = await conn.query(
-      `INSERT INTO sales (invoice_number,user_id,customer_name,customer_phone,subtotal,tax,total,payment_method)
-       VALUES (?,?,?,?,?,?,?,?)`,
+      `INSERT INTO sales (invoice_number,user_id,customer_name,customer_phone,subtotal,discount,
+        tax,total,amount_paid,balance_due,payment_status,payment_method)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
       [inv, req.user.id, customer_name || null, customer_phone || null,
-       subtotal, tax, total, payment_method || 'cash']
+       subtotal, discountAmount, tax, total, paid, balance, paymentStatus, payment_method || 'cash']
     );
     for (const it of resolved) {
       await conn.query(
@@ -90,7 +99,17 @@ exports.create = async (req, res, next) => {
       );
     }
     await conn.commit();
-    res.status(201).json({ id: r.insertId, invoice_number: inv, subtotal, tax, total });
+    res.status(201).json({
+      id: r.insertId,
+      invoice_number: inv,
+      subtotal,
+      discount: discountAmount,
+      tax,
+      total,
+      amount_paid: paid,
+      balance_due: balance,
+      payment_status: paymentStatus,
+    });
   } catch (e) {
     await conn.rollback();
     res.status(400).json({ message: e.message });

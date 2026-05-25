@@ -1,6 +1,6 @@
-# DAB Enterprise Ltd — Inventory & Sales Management System
+# Didier's Choice - Butcher Management System
 
-Full-stack assessment project (RQF Level 5).
+Full-stack butcher stock, sales, invoice and reporting system for Didier's Choice.
 
 **Stack**
 - Frontend: React 18 + Vite + Bootstrap 5 + React Router + Axios
@@ -9,16 +9,16 @@ Full-stack assessment project (RQF Level 5).
 - Auth: JWT + bcrypt (role-based: `admin`, `sales`)
 - Reports: PDF (pdfkit) + Excel (exceljs)
 
-## Project structure
+## Butcher Features
 
-```
-dab/
-├── backend/        Node + Express REST API
-│   ├── src/
-│   └── sql/schema.sql
-├── frontend/       React (Vite) SPA
-└── docs/           SRS + System Design
-```
+- Meat categories such as beef, goat, chicken, pork, fish, processed meat, offal and bones
+- Decimal stock quantities for weight-based sales such as `1.25 kg`
+- Units: `kg`, `g`, `piece`, and `pack`
+- Meat-specific product fields: animal type, cut type, storage type, storage location, batch number, slaughter date, expiry date, and barcode
+- Stock in, waste/stock out, and adjustment movements
+- Sales receipts with discounts, tax, amount paid, balance due, and customer credit support
+- Dashboard alerts for low stock and meat expiring within 3 days
+- Excel inventory report with batch, storage and expiry details
 
 ## 1. Database setup
 
@@ -26,9 +26,9 @@ dab/
 mysql -u root -p < backend/sql/schema.sql
 ```
 
-This creates the `dab_inventory` database, all tables, and seeds a default admin:
-- email: `admin@dab.local`
-- password: `Admin@123`
+This creates the `dab_inventory` database, all tables, and butcher seed data.
+No default login user is created. Open the app and create the first account;
+that first account automatically becomes the administrator.
 
 ## 2. Backend
 
@@ -53,13 +53,5 @@ The frontend expects the API at `http://localhost:5000/api` (configurable in `fr
 
 | Role  | Capabilities |
 |-------|--------------|
-| admin | Users, categories, suppliers, products, inventory, sales, reports |
-| sales | Record sales, view products, print invoices, view own sales history |
-
-## Modules
-Categories · Suppliers · Products · Inventory (stock in/out) · Sales (with invoice) · Dashboard · Reports (PDF/Excel)
-
-## Deliverables
-- `docs/SRS.md` — Software Requirement Specification
-- `docs/SystemDesign.md` — Use Case, Activity, Sequence, Class, ERD (Mermaid)
-- Source code (this repository)
+| admin | Users, categories, suppliers, meat stock, inventory movements, sales, reports |
+| sales | Record sales, view meat stock, print receipts, view own sales history |

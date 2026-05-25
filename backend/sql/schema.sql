@@ -1,4 +1,4 @@
--- DAB Enterprise Ltd — Inventory & Sales Management System
+-- Didier's Choice Butcher Management System
 -- MySQL 8 schema + seed data
 
 DROP DATABASE IF EXISTS dab_inventory;
@@ -45,65 +45,78 @@ CREATE TABLE suppliers (
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------------
--- Products
+-- Meat products and cuts
 -- ---------------------------------------------------------------------------
 CREATE TABLE products (
-  id            INT AUTO_INCREMENT PRIMARY KEY,
-  sku           VARCHAR(50) NOT NULL UNIQUE,
-  name          VARCHAR(200) NOT NULL,
-  description   TEXT,
-  category_id   INT,
-  supplier_id   INT,
-  cost_price    DECIMAL(12,2) NOT NULL DEFAULT 0,
-  selling_price DECIMAL(12,2) NOT NULL DEFAULT 0,
-  quantity      INT NOT NULL DEFAULT 0,
-  reorder_level INT NOT NULL DEFAULT 5,
-  created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  id               INT AUTO_INCREMENT PRIMARY KEY,
+  sku              VARCHAR(50) NOT NULL UNIQUE,
+  name             VARCHAR(200) NOT NULL,
+  description      TEXT,
+  category_id      INT,
+  supplier_id      INT,
+  unit             ENUM('kg','g','piece','pack') NOT NULL DEFAULT 'kg',
+  animal_type      VARCHAR(80),
+  cut_type         VARCHAR(100),
+  storage_type     ENUM('fresh','frozen','chilled','dry') NOT NULL DEFAULT 'fresh',
+  storage_location VARCHAR(120),
+  batch_number     VARCHAR(80),
+  slaughter_date   DATE,
+  expiry_date      DATE,
+  barcode          VARCHAR(80),
+  cost_price       DECIMAL(12,2) NOT NULL DEFAULT 0,
+  selling_price    DECIMAL(12,2) NOT NULL DEFAULT 0,
+  quantity         DECIMAL(12,3) NOT NULL DEFAULT 0,
+  reorder_level    DECIMAL(12,3) NOT NULL DEFAULT 5,
+  created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_products_category FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
   CONSTRAINT fk_products_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------------
--- Inventory movements (stock in / out adjustments)
+-- Inventory movements
 -- ---------------------------------------------------------------------------
 CREATE TABLE inventory_movements (
-  id           INT AUTO_INCREMENT PRIMARY KEY,
-  product_id   INT NOT NULL,
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  product_id    INT NOT NULL,
   movement_type ENUM('IN','OUT','ADJUST') NOT NULL,
-  quantity     INT NOT NULL,
-  note         VARCHAR(255),
-  user_id      INT,
-  created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  quantity      DECIMAL(12,3) NOT NULL,
+  note          VARCHAR(255),
+  user_id       INT,
+  created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_inv_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
   CONSTRAINT fk_inv_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------------
--- Sales (invoice header)
+-- Sales
 -- ---------------------------------------------------------------------------
 CREATE TABLE sales (
-  id             INT AUTO_INCREMENT PRIMARY KEY,
-  invoice_number VARCHAR(30) NOT NULL UNIQUE,
-  user_id        INT NOT NULL,
-  customer_name  VARCHAR(150),
-  customer_phone VARCHAR(30),
-  subtotal       DECIMAL(12,2) NOT NULL DEFAULT 0,
-  tax            DECIMAL(12,2) NOT NULL DEFAULT 0,
-  total          DECIMAL(12,2) NOT NULL DEFAULT 0,
-  payment_method ENUM('cash','card','mobile') NOT NULL DEFAULT 'cash',
-  created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  id              INT AUTO_INCREMENT PRIMARY KEY,
+  invoice_number  VARCHAR(30) NOT NULL UNIQUE,
+  user_id         INT NOT NULL,
+  customer_name   VARCHAR(150),
+  customer_phone  VARCHAR(30),
+  subtotal        DECIMAL(12,2) NOT NULL DEFAULT 0,
+  discount        DECIMAL(12,2) NOT NULL DEFAULT 0,
+  tax             DECIMAL(12,2) NOT NULL DEFAULT 0,
+  total           DECIMAL(12,2) NOT NULL DEFAULT 0,
+  amount_paid     DECIMAL(12,2) NOT NULL DEFAULT 0,
+  balance_due     DECIMAL(12,2) NOT NULL DEFAULT 0,
+  payment_status  ENUM('paid','partial','unpaid') NOT NULL DEFAULT 'paid',
+  payment_method  ENUM('cash','card','mobile','bank_transfer','credit') NOT NULL DEFAULT 'cash',
+  created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_sales_user FOREIGN KEY (user_id) REFERENCES users(id)
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------------
--- Sale items (invoice lines)
+-- Sale items
 -- ---------------------------------------------------------------------------
 CREATE TABLE sale_items (
   id          INT AUTO_INCREMENT PRIMARY KEY,
   sale_id     INT NOT NULL,
   product_id  INT NOT NULL,
-  quantity    INT NOT NULL,
+  quantity    DECIMAL(12,3) NOT NULL,
   unit_price  DECIMAL(12,2) NOT NULL,
   line_total  DECIMAL(12,2) NOT NULL,
   CONSTRAINT fk_items_sale FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE,
@@ -111,31 +124,50 @@ CREATE TABLE sale_items (
 ) ENGINE=InnoDB;
 
 CREATE INDEX idx_products_name ON products(name);
+CREATE INDEX idx_products_expiry ON products(expiry_date);
+CREATE INDEX idx_products_batch ON products(batch_number);
 CREATE INDEX idx_sales_created ON sales(created_at);
 
 -- ---------------------------------------------------------------------------
 -- Seed data
--- Default admin password = Admin@123 (bcrypt hash, 10 rounds)
+-- The first account created from the app becomes the administrator.
 -- ---------------------------------------------------------------------------
--- Passwords: admin = Admin@123 ; sales = Sales@123
-INSERT INTO users (full_name, email, password_hash, role) VALUES
-  ('System Administrator','admin@dab.local','$2a$10$9fCTGzQltvL0c3odL04B0u9odZ/pDEbPXtTQNusrH8ym10NGfmAZC','admin'),
-  ('Sales Officer','sales@dab.local','$2a$10$lNz99pNPWs9xCrSotsLJuuofZ2j/0xm0sTfysE9zPoNABydXZLMHG','sales');
-
 INSERT INTO categories (name, description) VALUES
-  ('Laptops','Portable computers'),
-  ('Smartphones','Mobile phones'),
-  ('Printers','Printing devices'),
-  ('Networking','Routers, switches, cables'),
-  ('Accessories','Cables, chargers, peripherals');
+  ('Beef','Fresh and frozen beef cuts'),
+  ('Goat','Goat meat cuts and organs'),
+  ('Chicken','Whole chicken and chicken pieces'),
+  ('Pork','Pork cuts and processed pork'),
+  ('Fish','Fresh and frozen fish'),
+  ('Processed Meat','Sausages, minced meat, burgers and packed meat'),
+  ('Offal and Bones','Liver, kidney, tripe, bones and soup cuts');
 
 INSERT INTO suppliers (name, contact, phone, email, address) VALUES
-  ('TechWorld Distributors','Jean Bosco','+250788000001','sales@techworld.rw','KG 11 Ave, Kigali'),
-  ('NetGear Africa','Alice U.','+250788000002','info@netgear.africa','KN 3 Rd, Kigali');
+  ('Kigali Livestock Cooperative','Jean Bosco','+250788000001','supply@kigalilivestock.rw','Nyabugogo, Kigali'),
+  ('Fresh Farm Meats','Alice U.','+250788000002','orders@freshfarm.rw','Kicukiro, Kigali');
 
-INSERT INTO products (sku, name, description, category_id, supplier_id, cost_price, selling_price, quantity, reorder_level) VALUES
-  ('LAP-001','HP EliteBook 840','14" i7 16GB 512GB SSD',1,1,750000,950000,12,3),
-  ('PHN-001','Samsung Galaxy A55','6.6" 128GB',2,1,280000,360000,25,5),
-  ('PRN-001','HP LaserJet M111w','Wireless mono laser printer',3,1,180000,235000,8,2),
-  ('NET-001','TP-Link Archer C6','AC1200 dual-band router',4,2,38000,55000,30,5),
-  ('ACC-001','Anker USB-C 65W Charger','GaN fast charger',5,2,18000,29000,50,10);
+INSERT INTO products
+  (sku, name, description, category_id, supplier_id, unit, animal_type, cut_type, storage_type,
+   storage_location, batch_number, slaughter_date, expiry_date, barcode, cost_price, selling_price,
+   quantity, reorder_level)
+VALUES
+  ('BEEF-RIB-001','Beef Ribs','Fresh beef ribs sold per kilogram',
+   (SELECT id FROM categories WHERE name='Beef'), (SELECT id FROM suppliers WHERE name='Kigali Livestock Cooperative'),
+   'kg','Beef','Ribs','chilled','Cold Room A','BEEF-20260525-A','2026-05-25','2026-05-30','DC-BEEF-RIB-001',5200,7000,45.500,8.000),
+  ('BEEF-MIN-001','Minced Beef','Fresh minced beef prepared daily',
+   (SELECT id FROM categories WHERE name='Processed Meat'), (SELECT id FROM suppliers WHERE name='Kigali Livestock Cooperative'),
+   'kg','Beef','Minced','fresh','Display Fridge','BEEF-20260525-M','2026-05-25','2026-05-27','DC-BEEF-MIN-001',4800,6500,18.250,5.000),
+  ('GOAT-LEG-001','Goat Leg','Goat leg cuts sold by weight',
+   (SELECT id FROM categories WHERE name='Goat'), (SELECT id FROM suppliers WHERE name='Kigali Livestock Cooperative'),
+   'kg','Goat','Leg','chilled','Cold Room B','GOAT-20260525-A','2026-05-25','2026-05-30','DC-GOAT-LEG-001',5000,6800,26.750,6.000),
+  ('CHK-WHOLE-001','Whole Chicken','Whole broiler chicken sold per piece',
+   (SELECT id FROM categories WHERE name='Chicken'), (SELECT id FROM suppliers WHERE name='Fresh Farm Meats'),
+   'piece','Chicken','Whole','fresh','Display Fridge','CHK-20260525-A','2026-05-25','2026-05-28','DC-CHK-WHOLE-001',4200,5500,35.000,10.000),
+  ('PORK-CHOP-001','Pork Chops','Fresh pork chops sold per kilogram',
+   (SELECT id FROM categories WHERE name='Pork'), (SELECT id FROM suppliers WHERE name='Fresh Farm Meats'),
+   'kg','Pork','Chops','chilled','Cold Room A','PORK-20260525-A','2026-05-25','2026-05-30','DC-PORK-CHOP-001',4300,6200,22.000,5.000),
+  ('FISH-TIL-001','Tilapia','Fresh tilapia sold per kilogram',
+   (SELECT id FROM categories WHERE name='Fish'), (SELECT id FROM suppliers WHERE name='Fresh Farm Meats'),
+   'kg','Fish','Whole fish','fresh','Ice Display','FISH-20260525-A','2026-05-25','2026-05-27','DC-FISH-TIL-001',3000,4500,30.000,6.000),
+  ('OFF-LIV-001','Beef Liver','Fresh beef liver sold per kilogram',
+   (SELECT id FROM categories WHERE name='Offal and Bones'), (SELECT id FROM suppliers WHERE name='Kigali Livestock Cooperative'),
+   'kg','Beef','Liver','fresh','Display Fridge','OFF-20260525-A','2026-05-25','2026-05-27','DC-OFF-LIV-001',2500,4000,12.500,3.000);

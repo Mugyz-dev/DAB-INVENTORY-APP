@@ -21,7 +21,7 @@ app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
 app.use(express.json());
 app.use(morgan('dev'));
 
-app.get('/api/health', (_req, res) => res.json({ ok: true, service: 'DAB API' }));
+app.get('/api/health', (_req, res) => res.json({ ok: true, service: "Didier's Choice API" }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -43,4 +43,4 @@ app.use((err, _req, res, _next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`DAB API listening on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Didier's Choice API listening on http://localhost:${PORT}`));

@@ -4,6 +4,14 @@ exports.summary = async (_req, res, next) => {
   try {
     const [[{ total_products }]] = await db.query('SELECT COUNT(*) AS total_products FROM products');
     const [[{ low_stock }]] = await db.query('SELECT COUNT(*) AS low_stock FROM products WHERE quantity <= reorder_level');
+    const [[{ expiring_soon }]] = await db.query(
+      `SELECT COUNT(*) AS expiring_soon
+       FROM products
+       WHERE expiry_date IS NOT NULL AND expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)`
+    );
+    const [[{ stock_value }]] = await db.query(
+      'SELECT COALESCE(SUM(quantity * cost_price),0) AS stock_value FROM products'
+    );
     const [[{ total_users }]] = await db.query('SELECT COUNT(*) AS total_users FROM users');
     const [[today]] = await db.query(
       `SELECT COALESCE(SUM(total),0) AS today_sales, COUNT(*) AS today_orders
@@ -22,7 +30,11 @@ exports.summary = async (_req, res, next) => {
        GROUP BY DATE(created_at) ORDER BY day`
     );
     res.json({
-      total_products, low_stock, total_users,
+      total_products,
+      low_stock,
+      expiring_soon,
+      stock_value: Number(stock_value),
+      total_users,
       today_sales: Number(today.today_sales),
       today_orders: today.today_orders,
       top_products: topProducts,

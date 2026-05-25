@@ -16,13 +16,20 @@ export function AuthProvider({ children }) {
     setUser(data.user);
     return data.user;
   }
+  async function register(full_name, email, password, confirm_password) {
+    const { data } = await api.post('/auth/register', { full_name, email, password, confirm_password });
+    localStorage.setItem('dab_token', data.token);
+    localStorage.setItem('dab_user', JSON.stringify(data.user));
+    setUser(data.user);
+    return data.user;
+  }
   function logout() {
     localStorage.removeItem('dab_token');
     localStorage.removeItem('dab_user');
     setUser(null);
   }
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAdmin: user?.role === 'admin' }}>
+    <AuthContext.Provider value={{ user, login, register, logout, isAdmin: user?.role === 'admin' }}>
       {children}
     </AuthContext.Provider>
   );

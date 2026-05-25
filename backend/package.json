@@ -1,7 +1,7 @@
 {
-  "name": "dab-backend",
+  "name": "didier-choice-backend",
   "version": "1.0.0",
-  "description": "DAB Enterprise Inventory & Sales API",
+  "description": "Didier's Choice butcher stock and sales API",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",

@@ -21,7 +21,7 @@ export default function Reports() {
 
   return (
     <div>
-      <h4>Reports</h4>
+      <h4>Butcher Reports</h4>
       <div className="card card-body shadow-sm mb-3">
         <div className="row g-2 align-items-end">
           <div className="col-md-3">
@@ -39,25 +39,25 @@ export default function Reports() {
         <div className="col-md-4">
           <div className="card card-body shadow-sm h-100">
             <h6>Sales report (PDF)</h6>
-            <p className="text-muted small">All sales in selected period.</p>
+            <p className="text-muted small">Sales, credit status, balances and totals in selected period.</p>
             <button className="btn btn-outline-primary"
-              onClick={()=>download(`/reports/sales.pdf${q}`,'sales-report.pdf')}>Download PDF</button>
+              onClick={()=>download(`/reports/sales.pdf${q}`,'didier-choice-sales-report.pdf')}>Download PDF</button>
           </div>
         </div>
         <div className="col-md-4">
           <div className="card card-body shadow-sm h-100">
             <h6>Sales report (Excel)</h6>
-            <p className="text-muted small">Same data as XLSX for analysis.</p>
+            <p className="text-muted small">Same sales data as XLSX for analysis.</p>
             <button className="btn btn-outline-success"
-              onClick={()=>download(`/reports/sales.xlsx${q}`,'sales-report.xlsx')}>Download Excel</button>
+              onClick={()=>download(`/reports/sales.xlsx${q}`,'didier-choice-sales-report.xlsx')}>Download Excel</button>
           </div>
         </div>
         <div className="col-md-4">
           <div className="card card-body shadow-sm h-100">
-            <h6>Inventory report (Excel)</h6>
-            <p className="text-muted small">Current stock levels for all products.</p>
+            <h6>Butcher inventory report (Excel)</h6>
+            <p className="text-muted small">Current stock, batches, storage locations and expiry dates.</p>
             <button className="btn btn-outline-success"
-              onClick={()=>download(`/reports/inventory.xlsx`,'inventory-report.xlsx')}>Download Excel</button>
+              onClick={()=>download(`/reports/inventory.xlsx`,'didier-choice-inventory-report.xlsx')}>Download Excel</button>
           </div>
         </div>
       </div>
